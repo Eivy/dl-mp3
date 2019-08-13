@@ -10,7 +10,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/puerkitobio/goquery"
+	"github.com/PuerkitoBio/goquery"
 )
 
 func main() {
