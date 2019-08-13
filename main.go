@@ -74,9 +74,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer au.Close()
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "audio/mpeg")
-		w.(http.Flusher).Flush()
+		w.WriteHeader(http.StatusOK)
 		log.Println("Download to " + mv.Name() + " from " + ytURL)
 		cmd := exec.Command("pipenv", "run", "youtube-dl", "-f", "mp4", "-o", mv.Name()+".mp4", ytURL)
 		var stdout bytes.Buffer
