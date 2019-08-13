@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -59,52 +57,26 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	} else {
-		mv, err := ioutil.TempFile("/tmp", "dl-mp3")
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		mv.Close()
-		os.Remove(mv.Name())
-		au, err := ioutil.TempFile("/tmp", "dl-mp3")
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer au.Close()
-		w.Header().Set("Content-Type", "audio/mpeg")
-		w.WriteHeader(http.StatusOK)
-		log.Println("Download to " + mv.Name() + " from " + ytURL)
-		cmd := exec.Command("pipenv", "run", "youtube-dl", "-f", "mp4", "-o", mv.Name()+".mp4", ytURL)
-		var stdout bytes.Buffer
-		var stderr bytes.Buffer
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-		err = cmd.Run()
-		if err != nil {
-			log.Println("cmd err: ", err)
-			log.Println("youtube-dl error output: " + stderr.String())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		log.Println("Write to " + au.Name())
-		cmd = exec.Command("ffmpeg", "-i", mv.Name()+".mp4", "-y", "-f", "mp3", au.Name())
-		err = cmd.Run()
-		if err != nil {
-			log.Println("cmd err: ", err)
-			log.Println("ffmpeg error output: " + stderr.String())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		log.Println("ffmpeg error output: " + stderr.String())
-		b, err := ioutil.ReadAll(au)
-		if err != nil {
-			log.Println("failed to read: ", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Write(b)
+		download(w, r)
 	}
+}
+
+func download(w http.ResponseWriter, r *http.Request) {
+	ytURL := r.URL.Query().Get("url")
+	w.Header().Set("Content-Type", "audio/mpeg")
+	w.WriteHeader(http.StatusOK)
+	log.Println("Download to " + " from " + ytURL)
+	cmdYoutubeDl := exec.Command("pipenv", "run", "youtube-dl", ytURL, "-f", "bestaudio", "-o", "-")
+	pReader, pWriter, _ := os.Pipe()
+	cmdYoutubeDl.Stdout = pWriter
+	cmdYoutubeDl.Stderr = os.Stderr
+	cmdFfmpeg := exec.Command("ffmpeg", "-i", "pipe:", "-q:a", "1", "-y", "-f", "mp3", "-")
+	cmdFfmpeg.Stdin = pReader
+	cmdFfmpeg.Stderr = os.Stderr
+	cmdFfmpeg.Stdout = w
+	cmdYoutubeDl.Start()
+	cmdFfmpeg.Start()
+	cmdYoutubeDl.Wait()
+	pWriter.Close()
+	cmdFfmpeg.Wait()
 }
