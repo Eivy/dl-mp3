@@ -21,6 +21,7 @@ func main() {
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	ytURL := r.URL.Query().Get("url")
+	log.Println("query url:", ytURL)
 	if ytURL == "" {
 		log.Println("index")
 		t, err := template.ParseFiles("./index.html")
@@ -55,29 +56,23 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println(err)
 		}
-		return
 	} else {
-		download(w, r)
+		w.Header().Set("Content-Type", "audio/mpeg")
+		w.WriteHeader(http.StatusOK)
+		w.(http.Flusher).Flush()
+		log.Println("Download from " + ytURL)
+		cmdYoutubeDl := exec.Command("pipenv", "run", "youtube-dl", ytURL, "-f", "bestaudio", "-o", "-")
+		pReader, pWriter, _ := os.Pipe()
+		cmdYoutubeDl.Stdout = pWriter
+		cmdYoutubeDl.Stderr = os.Stderr
+		cmdFfmpeg := exec.Command("ffmpeg", "-i", "pipe:", "-f", "mp3", "-b:a", "129k", "-")
+		cmdFfmpeg.Stdin = pReader
+		cmdFfmpeg.Stderr = os.Stderr
+		cmdFfmpeg.Stdout = w
+		cmdYoutubeDl.Start()
+		cmdFfmpeg.Start()
+		cmdYoutubeDl.Wait()
+		pWriter.Close()
+		cmdFfmpeg.Wait()
 	}
-}
-
-func download(w http.ResponseWriter, r *http.Request) {
-	ytURL := r.URL.Query().Get("url")
-	w.Header().Set("Content-Type", "audio/mpeg")
-	w.WriteHeader(http.StatusOK)
-	w.(http.Flusher).Flush()
-	log.Println("Download from " + ytURL)
-	cmdYoutubeDl := exec.Command("pipenv", "run", "youtube-dl", ytURL, "-f", "bestaudio", "-o", "-")
-	pReader, pWriter, _ := os.Pipe()
-	cmdYoutubeDl.Stdout = pWriter
-	cmdYoutubeDl.Stderr = os.Stderr
-	cmdFfmpeg := exec.Command("ffmpeg", "-i", "pipe:", "-f", "mp3", "-b:a", "129k", "-")
-	cmdFfmpeg.Stdin = pReader
-	cmdFfmpeg.Stderr = os.Stderr
-	cmdFfmpeg.Stdout = w
-	cmdYoutubeDl.Start()
-	cmdFfmpeg.Start()
-	cmdYoutubeDl.Wait()
-	pWriter.Close()
-	cmdFfmpeg.Wait()
 }
