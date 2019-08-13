@@ -2,7 +2,6 @@ package main
 
 import (
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -64,13 +63,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func download(w http.ResponseWriter, r *http.Request) {
 	ytURL := r.URL.Query().Get("url")
-	au, err := ioutil.TempFile("/tmp", "dl-mp3")
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer au.Close()
 	w.Header().Set("Content-Type", "audio/mpeg")
 	w.WriteHeader(http.StatusOK)
 	w.(http.Flusher).Flush()
@@ -79,7 +71,7 @@ func download(w http.ResponseWriter, r *http.Request) {
 	pReader, pWriter, _ := os.Pipe()
 	cmdYoutubeDl.Stdout = pWriter
 	cmdYoutubeDl.Stderr = os.Stderr
-	cmdFfmpeg := exec.Command("ffmpeg", "-i", "pipe:", "-q:a", "1", "-y", "-f", "mp3", au.Name())
+	cmdFfmpeg := exec.Command("ffmpeg", "-i", "pipe:", "-f", "mp3", "-b:a", "129k", "-")
 	cmdFfmpeg.Stdin = pReader
 	cmdFfmpeg.Stderr = os.Stderr
 	cmdFfmpeg.Stdout = w
@@ -87,12 +79,5 @@ func download(w http.ResponseWriter, r *http.Request) {
 	cmdFfmpeg.Start()
 	cmdYoutubeDl.Wait()
 	pWriter.Close()
-	err = cmdFfmpeg.Wait()
-	b, err := ioutil.ReadAll(au)
-	if err != nil {
-		log.Println("failed to read: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Write(b)
+	cmdFfmpeg.Wait()
 }
