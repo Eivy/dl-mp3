@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"io"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,17 +24,16 @@ func main() {
 func handler(w http.ResponseWriter, r *http.Request) {
 	ytURL := r.URL.Query().Get("url")
 	if ytURL == "" {
-		f, err := os.Open("./index.html")
+		log.Println("index")
+		t, err := template.ParseFiles("./index.html")
 		if err != nil {
-			log.Print("failed to read: ")
 			log.Println(err)
-			http.Error(w, "failed to read", http.StatusInternalServerError)
 		}
-		_, err = io.Copy(w, f)
+		index := template.Must(t, err)
+		// index.Execute(w, nil)
+		err = index.Execute(w, nil)
 		if err != nil {
-			log.Print("failed to copy: ")
 			log.Println(err)
-			http.Error(w, "failed to copy", http.StatusInternalServerError)
 		}
 	} else if r.URL.Path == "/title" {
 		d, err := goquery.NewDocument(ytURL)
@@ -42,10 +41,21 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			log.Print("failed to get youtube html: ", err)
 			http.Error(w, "failed to copy", http.StatusInternalServerError)
 		}
+		var title string
+		var escaped string
 		s := d.Find("meta[name=\"title\"]")
 		if a, ok := s.Attr("content"); ok {
-			title := url.PathEscape(a)
-			w.Write([]byte(title))
+			title = a
+			escaped = url.PathEscape(a)
+		}
+		index := template.Must(template.ParseFiles("./index.html"))
+		err = index.Execute(w, struct {
+			Title   string
+			Escaped string
+			URL     string
+		}{title, escaped, ytURL})
+		if err != nil {
+			log.Println(err)
 		}
 		return
 	} else {

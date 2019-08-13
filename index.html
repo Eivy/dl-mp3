@@ -1,29 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<title>MP3ダウンローダー</title>
-	<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
-	<script>
-		function dl(event) {
-			var url = document.querySelector('#url').value;
-			console.log(url);
-			$.get("/title?url=" + url, function(data) {
-				console.log(data);
-				var link = document.querySelector('a');
-				link.href = "/" + data + ".mp3?url=" + url;
-			});
-			alert('hoge');
-		}
-	</script>
-</head>
-<body style="font-size: 21pt;">
-	<div style="height: 100vh; display: flex; align-items: center; justify-content: center;">
-		<div style="text-align: center;">
-			<label for="url" style="border: 1px solid #888; border-radius: 0.2em 0 0 0.2em;">URL</label>
-			<input id="url" name="url" style="font-size: 21pt;">
+	<head>
+		<meta charset="UTF-8">
+		<title>MP3ダウンローダー</title>
+		<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+	</head>
+	<body style="font-size: 21pt;">
+		<div style="height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+			<div style="text-align: center;">
+				<form action="/title">
+					<label for="url" style="border: 1px solid #888; border-radius: 0.2em 0 0 0.2em;">URL</label>
+					<input id="url" name="url" style="font-size: 21pt;" value="{{ .URL }}">
+					<button style="font-size: 21pt;">確定</button>
+					<form>
+			</div>
+			{{ if .Title }}
+			<div style="padding: 3em;">
+				<div>{{ .Title  }}</div>
+				<a href="/{{ .Escaped }}.mp3?url={{ .URL }}" download onclick='dl(event);'>ダウンロード</a>
+			</div>
+			{{ end }}
 		</div>
-		<a href="/" download onclick='dl(event);'>ダウンロード</a>
-	</div>
-</body>
+	</body>
 </html>
