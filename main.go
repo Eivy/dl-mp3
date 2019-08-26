@@ -20,11 +20,15 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	ytURL, err := url.QueryUnescape(r.URL.Query().Get("url"))
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	var err error
+	ytURL := r.URL.Query().Get("url")
+	if ytURL != "" {
+		ytURL, err = url.QueryUnescape(ytURL)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 	log.Println("query url:", ytURL)
 	if ytURL == "" {
