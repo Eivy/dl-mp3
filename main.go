@@ -20,7 +20,12 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	ytURL := net.QueryUnescape(r.URL.Query().Get("url"))
+	ytURL, err := url.QueryUnescape(r.URL.Query().Get("url"))
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	log.Println("query url:", ytURL)
 	if ytURL == "" {
 		log.Println("index")
