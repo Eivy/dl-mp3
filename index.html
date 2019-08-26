@@ -8,7 +8,7 @@
 			function changed() {
 				var link = document.querySelector('a');
 				var br = document.querySelector('#bitrate');
-				link.href = '/{{ .Escaped }}.mp3?url={{ .URL }}&br=' + br.value;
+				link.href = '/{{ .Title | urlescaper }}.mp3?url={{ .URL | urlescaper }}&br=' + br.value;
 			}
 		</script>
 	</head>
@@ -30,7 +30,7 @@
 					<option value="192">192</option>
 					<option value="256">256</option>
 				</select>kbps
-				<a href="/{{ .Escaped }}.mp3?url={{ .URL }}" download>ダウンロード</a>
+				<a href="/{{ .Title | urlescaper }}.mp3?url={{ .URL | urlescaper }}" download>ダウンロード</a>
 			</div>
 			{{ end }}
 		</div>
