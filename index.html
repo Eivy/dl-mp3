@@ -8,7 +8,7 @@
 			function changed() {
 				var link = document.querySelector('a');
 				var br = document.querySelector('#bitrate');
-				a.href = '/{{ .Escaped }}.mp3?url={{ .URL }}&br=' + br.value;
+				link.href = '/{{ .Escaped }}.mp3?url={{ .URL }}&br=' + br.value;
 			}
 		</script>
 	</head>
@@ -24,7 +24,7 @@
 			{{ if .Title }}
 			<div style="padding: 3em;">
 				<div>{{ .Title  }}</div>
-				<select id="bitrate" name="bitrate" onchange="changed">
+				<select id="bitrate" name="bitrate" onchange="changed(event)">
 					<option value="96">96</option>
 					<option value="128" selected>128</option>
 					<option value="192">192</option>
