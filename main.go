@@ -57,6 +57,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 	} else {
+		br := r.URL.Query().Get("br")
+		if br == "" {
+			br = "128"
+		}
 		w.Header().Set("Content-Type", "audio/mpeg")
 		w.WriteHeader(http.StatusOK)
 		w.(http.Flusher).Flush()
@@ -65,7 +69,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		pReader, pWriter, _ := os.Pipe()
 		cmdYoutubeDl.Stdout = pWriter
 		cmdYoutubeDl.Stderr = os.Stderr
-		cmdFfmpeg := exec.Command("ffmpeg", "-i", "pipe:", "-f", "mp3", "-b:a", "129k", "-")
+		cmdFfmpeg := exec.Command("ffmpeg", "-i", "pipe:", "-f", "mp3", "-b:a", br+"k", "-")
 		cmdFfmpeg.Stdin = pReader
 		cmdFfmpeg.Stderr = os.Stderr
 		cmdFfmpeg.Stdout = w
