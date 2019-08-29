@@ -45,7 +45,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if br == "" {
 			br = "128"
 		}
-		var buf *bytes.Buffer
+		buf := new(bytes.Buffer)
 		cmdYoutubeDl := exec.Command("pipenv", "run", "youtube-dl", "-e", ytURL)
 		cmdYoutubeDl.Stdout = buf
 		cmdYoutubeDl.Stderr = os.Stderr
