@@ -57,7 +57,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 		title := buf.String()
 		w.Header().Set("Content-Type", "audio/mpeg")
-		w.Header().Set("Content-Disposition", "attachment; filename*=utf-8''"+url.PathEscape(title))
+		w.Header().Set("Content-Disposition", "attachment; filename*=utf-8''"+url.PathEscape(title)+".mp3")
 		w.WriteHeader(http.StatusOK)
 		w.(http.Flusher).Flush()
 		log.Println("Download from " + ytURL)
