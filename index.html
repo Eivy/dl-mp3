@@ -4,35 +4,22 @@
 		<meta charset="UTF-8">
 		<title>MP3ダウンローダー</title>
 		<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
-		<script>
-			function changed() {
-				var link = document.querySelector('a');
-				var br = document.querySelector('#bitrate');
-				link.href = '/{{ .Title | urlquery }}.mp3?url={{ .URL | urlquery }}&br=' + br.value;
-			}
-		</script>
 	</head>
 	<body style="font-size: 21pt;">
 		<div stylE="HEIGHt: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
 			<div style="text-align: center;">
-				<form action="/title">
+				<form action="/" method="GET">
 					<label for="url" style="border: 1px solid #888; border-radius: 0.2em 0 0 0.2em;">URL</label>
-					<input id="url" name="url" style="font-size: 21pt;" value="{{ .URL }}">
+					<input id="url" name="url" style="font-size: 21pt;">
 					<button style="font-size: 21pt;">確定</button>
-					<form>
+					<select id="bitrate" name="bitrate">
+						<option value="96">96</option>
+						<option value="128" selected>128</option>
+						<option value="192">192</option>
+						<option value="256">256</option>
+					</select>kbps
+				<form>
 			</div>
-			{{ if .Title }}
-			<div style="padding: 3em;">
-				<div>{{ .Title  }}</div>
-				<select id="bitrate" name="bitrate" onchange="changed(event)">
-					<option value="96">96</option>
-					<option value="128" selected>128</option>
-					<option value="192">192</option>
-					<option value="256">256</option>
-				</select>kbps
-				<a href="/{{ .Title | urlquery }}.mp3?url={{ .URL | urlquery }}" download>ダウンロード</a>
-			</div>
-			{{ end }}
 		</div>
 	</body>
 </html>

@@ -1,14 +1,13 @@
 package main
 
 import (
-	"html/template"
+	"bytes"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 func main() {
@@ -33,48 +32,36 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("query url:", ytURL)
 	if ytURL == "" {
 		log.Println("index")
-		t, err := template.ParseFiles("./index.html")
+		f, err := os.Open("./index.html")
 		if err != nil {
 			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		index := template.Must(t, err)
-		// index.Execute(w, nil)
-		err = index.Execute(w, nil)
-		if err != nil {
-			log.Println(err)
-		}
-	} else if r.URL.Path == "/title" {
-		d, err := goquery.NewDocument(ytURL)
-		if err != nil {
-			log.Print("failed to get youtube html: ", err)
-			http.Error(w, "failed to copy", http.StatusInternalServerError)
-		}
-		var title string
-		var escaped string
-		s := d.Find("meta[name=\"title\"]")
-		if a, ok := s.Attr("content"); ok {
-			title = a
-			escaped = url.PathEscape(a)
-		}
-		index := template.Must(template.ParseFiles("./index.html"))
-		err = index.Execute(w, struct {
-			Title   string
-			Escaped string
-			URL     string
-		}{title, escaped, ytURL})
-		if err != nil {
-			log.Println(err)
-		}
+		defer f.Close()
+		io.Copy(w, f)
 	} else {
 		br := r.URL.Query().Get("br")
 		if br == "" {
 			br = "128"
 		}
+		var buf *bytes.Buffer
+		cmdYoutubeDl := exec.Command("pipenv", "run", "youtube-dl", "-e", ytURL)
+		cmdYoutubeDl.Stdout = buf
+		cmdYoutubeDl.Stderr = os.Stderr
+		err := cmdYoutubeDl.Run()
+		if err != nil {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		title := buf.String()
 		w.Header().Set("Content-Type", "audio/mpeg")
+		w.Header().Set("Content-Disposition", "attachment; filename*=utf-8''"+url.PathEscape(title))
 		w.WriteHeader(http.StatusOK)
 		w.(http.Flusher).Flush()
 		log.Println("Download from " + ytURL)
-		cmdYoutubeDl := exec.Command("pipenv", "run", "youtube-dl", ytURL, "-f", "bestaudio", "-o", "-")
+		cmdYoutubeDl = exec.Command("pipenv", "run", "youtube-dl", ytURL, "-f", "bestaudio", "-o", "-")
 		pReader, pWriter, _ := os.Pipe()
 		cmdYoutubeDl.Stdout = pWriter
 		cmdYoutubeDl.Stderr = os.Stderr
