@@ -6,4 +6,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
+          ls -la
           git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_NAME.git HEAD
