@@ -5,7 +5,8 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: {owner}/{repo}/{path}@{ref}
+      - name: git push
+        uses: {owner}/{repo}/{path}@{ref}
         run: |
           ls -la
           git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_NAME.git HEAD
